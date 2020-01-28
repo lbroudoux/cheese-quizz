@@ -1,0 +1,62 @@
+apiVersion: 1.0.0
+metadata:
+  name: cheese-quizz
+projects:
+  - name: cheese-quizz
+    source:
+      location: 'https://github.com/lbroudoux/cheese-quizz.git'
+      type: git
+      branch: master
+components:
+  - type: dockerimage
+    alias: maven
+    image: 'quay.io/eclipse/che-java11-maven:7.4.0'
+    memoryLimit: 256Mi
+    mountSources: true
+    endpoints:
+      - name: localhost-8080
+        port: 8080
+      - name: localhost-9000
+        port: 9000
+  - id: redhat/workshop-tools/3.0
+    type: chePlugin
+    alias: workshop-tools
+commands:
+  - name: 'OpenShift - Login'
+    actions:
+      - type: exec
+        command: >-
+          oc login --server=$(oc whoami --show-server) -u
+          ${CHE_WORKSPACE_NAMESPACE}  -p 'openshift' --insecure-skip-tls-verify
+          &&  oc project cheese-quizz-dev
+        component: workshop-tools
+  - name: 'Model - Install'
+    actions:
+      - workdir: /projects/cheese-quizz/quizz-model
+        type: exec
+        command: mvn clean install -DskipTests
+        component: workshop-tools
+  - name: 'Client - Compile (Dev Mode)'
+    actions:
+      - workdir: /projects/cheese-quizz/quizz-client
+        type: exec
+        command: mvn compile quarkus:dev
+        component: workshop-tools
+  - name: 'Client - Build'
+    actions:
+      - workdir: /projects/cheese-quizz/quizz-client
+        type: exec
+        command: mvn clean package -DskipTests
+        component: workshop-tools
+  - name: 'Question - Compile (Dev Mode)'
+    actions:
+      - workdir: /projects/cheese-quizz/quizz-question
+        type: exec
+        command: mvn compile quarkus:dev
+        component: workshop-tools
+  - name: 'Question - Build'
+    actions:
+      - workdir: /projects/cheese-quizz/quizz-question
+        type: exec
+        command: mvn clean package -DskipTests
+        component: workshop-tools

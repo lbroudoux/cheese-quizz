@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Cheese Quizz!</title>
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato&display=swap">
+  <style>
+    body {
+      font-family: 'Lato', sans-serif;
+    }
+    .light-color {
+      color: #eeeeee;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">🧀 Cheese Quizz !</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarToggler">
+      <form class="form-inline">
+        <div class="form-check m-2">
+          <input type="checkbox" class="form-check-input" id="autoRefresh">
+          <label class="form-check-label light-color ml-2" for="autoRefresh">Auto Refresh</label>
+        </div>
+        <div class="form-check m-2">
+          <input type="checkbox" class="form-check-input" id="betaProgram">
+          <label class="form-check-label light-color ml-2" for="betaProgram">Beta Program</label>
+        </div>
+      </form>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-11 text-center m-5">
+        <h3 id="title">Guess who I am...</h3>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col text-center">
+        <img id="cheeseImage" src="" class="rounded"/>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-10 text-center m-5">
+        <p id="cheeseDescription"></p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col"></div>
+      <div class="col-8">
+        <form>
+          <div class="form-group">
+            <input type="text" class="form-control" id="cheese" name="cheese" placeholder="A cheese...">
+          </div>
+        </form>
+      </div>
+      <div class="col-3">
+        <button class="btn btn-info" type="button" role="button" onclick="checkName()">Check</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="successModal">✅ Awesome !!</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h4>👍 You're a cheese connoisseur ;-)</h4>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="failureModal" tabindex="-1" role="dialog" aria-labelledby="successModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="failureModal">❌ Too bad</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h4>👎 Please try again...</h4>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script src="./js/jquery.min.js"></script>
+<script src="./js/bootstrap.min.js"></script>
+<script>
+var GUESS="Guess who I am...";
+var OOPS="Oops... something goes wrong...";
+var LOADING="Loading a new cheese...";
+
+var cheeseName;
+var refreshLoop;
+var pauseLoop = false;
+
+var autoRefresh = false;
+var betaProgram = false;
+
+$("#autoRefresh").click(function() {
+  autoRefresh = $(this).prop('checked');
+  if (autoRefresh) {
+    refreshLoop = setInterval(function() {
+      if (!pauseLoop) {
+        fetchNewCheese();
+      }
+    }, 2000);
+  } else {
+    clearInterval(refreshLoop);
+  }
+});
+$("#betaProgram").click(function() {
+  betaProgram = $(this).prop('checked');
+});
+
+$("#cheese").click(function() {
+  pauseLoop = true;
+});
+$("#cheese").blur(function() {
+  pauseLoop = false;
+});
+function checkName() {
+  var response = $("#cheese").val();
+  if (response.toLowerCase() === cheeseName.toLowerCase()) {
+    $('#successModal').modal({'show': true});
+  } else {
+    $('#failureModal').modal({'show': true});
+  }
+  $("#cheese").val('');
+}
+
+$(document).ready(function() {
+  fetchNewCheese();
+});
+
+function fetchNewCheese() {
+  cheeseName = null;
+  $('#title').html(GUESS);
+  $('#cheeseDescription').html(LOADING);
+  // Build request options.
+  var options = {
+    type: "GET",
+    url: "/api/quizz/cheese",
+    dataType: 'json',
+    contentType: 'application/json'
+  };
+  if (betaProgram) {
+    options.headers = {'x-channel': 'canary'}
+  }
+  $.ajax(options).done(function(data) {
+    populateCheese(data);
+  })
+  .fail(function(data) {
+    populateError(JSON.parse(data.responseText));
+  });
+}
+function populateCheese(question) {
+  if (question.success) {
+    cheeseName = question.cheese.name;
+    $('#cheeseImage').attr('src', question.cheese.image);
+    $('#cheeseDescription').html(question.cheese.description);
+    $('#cheeseDescription').removeClass('text-danger');
+  }
+}
+function populateError(error) {
+  $('#title').html(OOPS);
+  $('#cheeseImage').attr('src', error.image);
+  $('#cheeseDescription').html(error.failureReason);
+  $('#cheeseDescription').addClass('text-danger');
+}
+</script>
+</html>
