@@ -1,0 +1,107 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: java
+  name: cheese-quizz-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cheese-quizz-client
+  template:
+    metadata:
+      labels:
+        app: cheese-quizz-client
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: "http"
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      - image: quay.io/lbroudoux/cheese-quizz-client:latest
+        imagePullPolicy: Always
+        env:
+        - name: QUARKUS_PROFILE
+          value: kube
+        resources:
+          limits:
+            cpu: 500m
+            memory: 400Mi
+          requests:
+            cpu: 250m
+            memory: 300Mi
+        livenessProbe:
+          httpGet:
+            path: "/health"
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 1
+        name: quizz-client
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 8778
+          name: jolokia
+          protocol: TCP
+        - containerPort: 9779
+          name: prometheus
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: "/health"
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+        securityContext:
+          privileged: false
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: cheese-quizz-client
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/part-of: cheese-quizz-app
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: cheese-quizz-client
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: cheese-quizz-client
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/part-of: cheese-quizz-app
+  annotations:
+    openshift.io/host.generated: 'true'
+spec:
+  to:
+    kind: Service
+    name: cheese-quizz-client
+    weight: 100
+  port:
+    targetPort: 8080-tcp
+  wildcardPolicy: None

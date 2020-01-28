@@ -27,6 +27,9 @@ public class QuizzClientResource {
     @ConfigProperty(name = "timeout.image")
     String timeoutImage;
 
+    @ConfigProperty(name = "quizz-like-function.url")
+    String quizzLikeFunctionURL;
+
     @Inject
     @RestClient
     CheeseServerService cheeseService;
@@ -35,6 +38,13 @@ public class QuizzClientResource {
     @Produces(MediaType.TEXT_PLAIN)
     public String hello() {
         return "hello";
+    }
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("/likeFunctionURL")
+    public String getLikeFunctionURL() {
+        return quizzLikeFunctionURL;
     }
 
     @GET

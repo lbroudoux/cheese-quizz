@@ -14,7 +14,7 @@ import javax.ws.rs.Produces;
 public interface CheeseServerService {
 
     @GET
-    @Path("/new")
+    @Path("/fetch")
     @Produces("application/json")
     Cheese getNewCheese();
 }
