@@ -5,7 +5,7 @@ module.exports = function (app) {
   app.use('/api/like', require('./api/like'));
 
   app.get('/healthz', (request, response) => {
-    var client = req.app.get('kafkaClient');
+    var client = request.app.get('kafkaClient');
     client.loadMetadata(function(err, result) {
       if (err) {
         return response.sendStatus(500);
