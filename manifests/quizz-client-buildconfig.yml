@@ -46,6 +46,7 @@ metadata:
     app.openshift.io/runtime: java
     app.openshift.io/runtime-version: '8'
   annotations:
+    argocd.argoproj.io/sync-options: Validate=false
     app.openshift.io/vcs-ref: master
     app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
 spec:

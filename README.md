@@ -10,13 +10,18 @@ A fun cheese quizz deployed on OpenShift and illustrating cloud native technolog
 Plese initialize and configure following components in this order:
 
 * A `cheese-quizz` project for holding your project component
+    * Add this label: `oc label namespace/cheese-quizz istio.io/member-of=istio-system`
+    * Add this label: `oc label namespace/cheese-quizz kiali.io/member-of=istio-system`
+
+* AMQ Streams operator deployed cluster wide
+    * Create a `Kafka` CR into `cheese-quizz` letting the default properties
 
 * Istio Service Mesh deployed with `basic-install` on `istio-system` project
-** Also deploy a `ServiceMeshMemberRoll` into `istio-system` referencing `cheese-quizz` project as member
-** Take care of removing `LimitRanges` into `cheese-quizz` project
+    * Also deploy a `ServiceMeshMemberRoll` into `istio-system` referencing `cheese-quizz` project as member
+    * Take care of removing `LimitRanges` into `cheese-quizz` project
 
 * Knative Serving deployed cluster wide
-** Create a `KnativeServing` CR into `knative-serving` project, adding `image-registry.openshift-image-registry.svc:5000` into `registriesSkippingTagResolving` property
+    * Create a `KnativeServing` CR into `knative-serving` project, adding `image-registry.openshift-image-registry.svc:5000` into `registriesSkippingTagResolving` property
 
 * Fuse Online operator deployed into `fuse-online` project
 ** Create a `SyndesisCRD` CR, calling it `syndesis`
