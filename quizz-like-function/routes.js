@@ -4,7 +4,15 @@ module.exports = function (app) {
   // Insert routes below
   app.use('/api/like', require('./api/like'));
 
-  app.get('/healthz', (request, response) => { response.sendStatus(200) });
+  app.get('/healthz', (request, response) => {
+    var client = req.app.get('kafkaClient');
+    client.loadMetadata(function(err, result) {
+      if (err) {
+        return response.sendStatus(500);
+      }
+      response.sendStatus(200);  
+    })
+  });
 
   // All undefined asset or api routes should return a 404
   app.route('/:url(api|auth|components|app|bower_components|assets)/*')

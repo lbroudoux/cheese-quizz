@@ -1,0 +1,34 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: quizz-client-pipeline-triggertemplate
+spec:
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1alpha1
+    kind: PipelineResource
+    metadata:
+      name: source-repo-cheese-quizz-$(uid)
+      namespace: cheese-quizz
+    spec:
+      type: git
+      params:
+      - name: revision
+        value: $(params.gitrevision)
+      - name: url
+        value: $(params.gitrepositoryurl)
+  - apiVersion: tekton.dev/v1alpha1
+    kind: PipelineRun
+    metadata:
+      name: quizz-client-pipeline-$(uid)
+      namespace: cheese-quizz
+    spec:
+      pipelineRef:
+        name: quizz-client-pipeline
+      serviceAccount: 'pipeline'
+      params:
+      - name: componentName
+        value: cheese-quizz-client
+      - name: containerName
+        value: quizz-client
+      - name: imageUrl
+        value: image-registry.openshift-image-registry.svc:5000/cheese-quizz/cheese-quizz-client:latest

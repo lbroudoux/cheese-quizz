@@ -1,0 +1,88 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: cheese-quizz-client-generic-webhook-secret
+data:
+  WebHookSecretKey: ZDcyNTI2YWRjNDI1MjIxZg==
+type: Opaque
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: cheese-quizz-client-github-webhook-secret
+data:
+  WebHookSecretKey: NTQ5MzYzYTkyYTFhNTQxNw==
+type: Opaque
+---
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: cheese-quizz-client
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: cheese-quizz-client
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/name: java
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: java
+    app.openshift.io/runtime-version: '8'
+spec:
+  lookupPolicy:
+    local: false
+---
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: cheese-quizz-client
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: cheese-quizz-client
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/name: java
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: java
+    app.openshift.io/runtime-version: '8'
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+spec:
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'cheese-quizz-client:latest'
+  resources: {}
+  successfulBuildsHistoryLimit: 5
+  failedBuildsHistoryLimit: 5
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        namespace: openshift
+        name: 'java:8'
+      env:
+        - name: MAVEN_ARGS
+          value: '-Dquarkus.package.uber-jar=true package'
+  postCommit: {}
+  source:
+    type: Git
+    git:
+      uri: 'https://github.com/lbroudoux/cheese-quizz'
+      ref: master
+    contextDir: /quizz-client
+  triggers:
+    - type: Generic
+      generic:
+        secretReference:
+          name: cheese-quizz-client-generic-webhook-secret
+    - type: GitHub
+      github:
+        secretReference:
+          name: cheese-quizz-client-github-webhook-secret
+    - type: ImageChange
+    - type: ConfigChange
+  runPolicy: Serial

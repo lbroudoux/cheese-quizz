@@ -21,6 +21,9 @@ metadata:
     app.kubernetes.io/instance: cheese-quizz-question
     app.kubernetes.io/part-of: cheese-quizz-app
     app.openshift.io/runtime: java
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
   name: cheese-quizz-question-v2
 spec:
   replicas: 1

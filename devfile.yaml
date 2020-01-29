@@ -60,3 +60,9 @@ commands:
         type: exec
         command: mvn clean package -DskipTests
         component: workshop-tools
+  - name: 'Client - Pipeline Run'
+    actions:
+      - workdir: /projects/cheese-quizz
+        type: exec
+        command: tkn pipeline start quizz-client-pipeline
+        component: workshop-tools

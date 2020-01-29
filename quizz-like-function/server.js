@@ -22,6 +22,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+app.set('kafkaClient', client);
 app.set('kafkaProducer', producer);
 app.set('kafkaLikeTopic', kafkaLikeTopic);
 

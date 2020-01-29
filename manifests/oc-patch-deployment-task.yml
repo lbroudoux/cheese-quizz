@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: oc-apply-deployment
+spec:
+  inputs:
+    params:
+      - name: componentName
+        default: sample
+        description: The name of the component
+      - name: containerName
+        default: sample
+        description: The name of the component
+      - name: imageUrl
+        default: sample
+        description: The name of the component
+  steps:
+  - name: patch
+    image: quay.io/openshift/origin-cli:latest
+    command: ["/bin/bash", "-c"]
+    args:
+    - |-
+        oc patch deploymentconfig $(inputs.params.componentName) \
+          --patch='{
+              "spec":{
+                "template":{
+                  "spec":{
+                    "containers":[{
+                      "name": "$(inputs.params.containerName)",
+                      "image":"$(inputs.params.imageUrl)"
+                    }]
+                  }
+                }
+              }
+            }'

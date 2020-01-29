@@ -1,0 +1,50 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: cheese-quizz-like-function
+  labels:
+    app: cheese-quizz-like-function
+    app.kubernetes.io/component: cheese-quizz-like-function
+    app.kubernetes.io/instance: cheese-quizz-like-function
+    app.kubernetes.io/name: nodejs
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: nodejs
+    app.openshift.io/runtime-version: '10'
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 4000
+  selector:
+    app: cheese-quizz-like-function
+    deploymentconfig: cheese-quizz-like-function
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: cheese-quizz-like-function
+  labels:
+    app: cheese-quizz-like-function
+    app.kubernetes.io/component: cheese-quizz-like-function
+    app.kubernetes.io/instance: cheese-quizz-like-function
+    app.kubernetes.io/name: nodejs
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: nodejs
+    app.openshift.io/runtime-version: '10'
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+spec:
+  to:
+    kind: Service
+    name: cheese-quizz-like-function
+    weight: 100
+  port:
+    targetPort: 8080-tcp
+  wildcardPolicy: None

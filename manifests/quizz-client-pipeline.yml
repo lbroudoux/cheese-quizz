@@ -1,0 +1,42 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: quizz-client-pipeline
+spec:
+  params:
+  - name: componentName
+    default: cheese-quizz-client
+    description: The name of the component
+  - name: containerName
+    default: quizz-client
+    description: The name of the container in deployment
+  - name: imageUrl
+    default: image-registry.openshift-image-registry.svc:5000/cheese-quizz/cheese-quizz-client:latest
+    description: The URL of newly produced image
+  tasks:
+  - name: build-image
+    taskRef:
+      name: oc-start-build
+    params:
+    - name: componentName
+      value: '$(params.componentName)'
+  - name: apply-image
+    taskRef:
+      name: oc-apply-deployment
+    runAfter:
+      - build-image
+    params:
+    - name: componentName
+      value: '$(params.componentName)'
+    - name: containerName
+      value: '$(params.containerName)'
+    - name: imageUrl
+      value: '$(params.imageUrl)'
+  - name: deploy
+    taskRef:
+      name: oc-deploy
+    runAfter:
+      - apply-image
+    params:
+    - name: componentName
+      value: '$(params.componentName)'

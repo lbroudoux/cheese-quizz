@@ -1,0 +1,84 @@
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  name: cheese-quizz-like-function
+  labels:
+    app: cheese-quizz-like-function
+    app.kubernetes.io/component: cheese-quizz-like-function
+    app.kubernetes.io/instance: cheese-quizz-like-function
+    app.kubernetes.io/name: nodejs
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: nodejs
+    app.openshift.io/runtime-version: '10'
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {}
+    activeDeadlineSeconds: 21600
+  triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - cheese-quizz-like-function
+        from:
+          kind: ImageStreamTag
+          namespace: cheese-quizz
+          name: 'cheese-quizz-like-function:latest'
+    - type: ConfigChange
+  replicas: 1
+  revisionHistoryLimit: 10
+  test: false
+  selector:
+    app: cheese-quizz-like-function
+    deploymentconfig: cheese-quizz-like-function
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: cheese-quizz-like-function
+        deploymentconfig: cheese-quizz-like-function
+    spec:
+      containers:
+        - name: cheese-quizz-like-function
+          image: cheese-quizz/cheese-quizz-like-function:latest
+          ports:
+            - containerPort: 4000
+              protocol: TCP
+          env:
+            - name: KAFKA_HOST
+              value: 'my-cluster-kafka-bootstrap.cheese-quizz.svc.cluster.local:9092'
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "/healthz"
+              port: 4000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: "/healthz"
+              port: 4000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler

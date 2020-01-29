@@ -1,0 +1,85 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: cheese-quizz-like-function-generic-webhook-secret
+data:
+  WebHookSecretKey: ZDcyNTI2YWRjNDI1MjIxZg==
+type: Opaque
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: cheese-quizz-like-function-github-webhook-secret
+data:
+  WebHookSecretKey: NTQ5MzYzYTkyYTFhNTQxNw==
+type: Opaque
+---
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: cheese-quizz-like-function
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+  labels:
+    app: cheese-quizz-like-function
+    app.kubernetes.io/component: cheese-quizz-like-function
+    app.kubernetes.io/instance: cheese-quizz-like-function
+    app.kubernetes.io/name: nodejs
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: nodejs
+    app.openshift.io/runtime-version: '10'
+spec:
+  lookupPolicy:
+    local: false
+---
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: cheese-quizz-like-function
+  labels:
+    app: cheese-quizz-like-function
+    app.kubernetes.io/component: cheese-quizz-like-function
+    app.kubernetes.io/instance: cheese-quizz-like-function
+    app.kubernetes.io/name: nodejs
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: nodejs
+    app.openshift.io/runtime-version: '10'
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+spec:
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'cheese-quizz-like-function:latest'
+  resources: {}
+  successfulBuildsHistoryLimit: 5
+  failedBuildsHistoryLimit: 5
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        namespace: openshift
+        name: 'nodejs:10'
+  postCommit: {}
+  source:
+    type: Git
+    git:
+      uri: 'https://github.com/lbroudoux/cheese-quizz'
+      ref: master
+    contextDir: /quizz-like-function
+  triggers:
+    - type: Generic
+      generic:
+        secretReference:
+          name: cheese-quizz-like-function-generic-webhook-secret
+    - type: GitHub
+      github:
+        secretReference:
+          name: cheese-quizz-like-function-github-webhook-secret
+    - type: ImageChange
+    - type: ConfigChange
+  runPolicy: Serial
