@@ -109,7 +109,7 @@ metadata:
     app.kubernetes.io/instance: cheese-quizz-client
     app.kubernetes.io/part-of: cheese-quizz-app
   annotations:
-    openshift.io/host.generated: 'true'
+    argocd.argoproj.io/sync-options: Validate=false
 spec:
   to:
     kind: Service

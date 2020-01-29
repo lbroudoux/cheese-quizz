@@ -51,6 +51,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: quizz-client-pipeline-listener
+  annotations:
+    argocd.argoproj.io/sync-options: Validate=false
 spec:
   port:
     targetPort: 8080
