@@ -1,5 +1,5 @@
-kind: DeploymentConfig
-apiVersion: apps.openshift.io/v1
+apiVersion: extensions/v1beta1
+kind: Deployment
 metadata:
   labels:
     app: cheese-quizz-client
@@ -13,19 +13,9 @@ metadata:
   name: cheese-quizz-client
 spec:
   replicas: 1
-  triggers: []
-  strategy:
-    type: Rolling
-    rollingParams:
-      updatePeriodSeconds: 1
-      intervalSeconds: 1
-      timeoutSeconds: 600
-      maxUnavailable: 25%
-      maxSurge: 25%
-    resources: {}
-    activeDeadlineSeconds: 21600
   selector:
-    app: cheese-quizz-client
+    matchLabels:
+      app: cheese-quizz-client
   template:
     metadata:
       labels:

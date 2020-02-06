@@ -1,0 +1,129 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: cheese-quizz-client-generic-webhook-secret
+data:
+  WebHookSecretKey: ZDcyNTI2YWRjNDI1MjIxZg==
+type: Opaque
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: cheese-quizz-client-github-webhook-secret
+data:
+  WebHookSecretKey: NTQ5MzYzYTkyYTFhNTQxNw==
+type: Opaque
+---
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: cheese-quizz-client
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: cheese-quizz-client
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/name: java
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: java
+    app.openshift.io/runtime-version: '8'
+spec:
+  lookupPolicy:
+    local: false
+  tags:
+  - name: latest
+    from:
+      kind: DockerImage
+      name: quay.io/lbroudoux/cheese-quizz-client:latest
+---
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  name: cheese-quizz-client
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: java
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {}
+    activeDeadlineSeconds: 21600
+  triggers:
+    - type: ImageChange
+      imageChangeParams:
+        containerNames:
+          - quizz-client
+        from:
+          kind: ImageStreamTag
+          namespace: cheese-quizz
+          name: 'cheese-quizz-client:latest'
+  replicas: 1
+  revisionHistoryLimit: 10
+  test: false
+  selector:
+    app: cheese-quizz-client
+    deploymentconfig: cheese-quizz-client
+  template:
+    metadata:
+      labels:
+        app: cheese-quizz-client
+        deploymentconfig: cheese-quizz-client
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: "http"
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: quizz-client
+          image: cheese-quizz/cheese-quizz-client:latest
+          imagePullPolicy: Always
+          env:
+          - name: QUARKUS_PROFILE
+            value: kube
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 1
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 8778
+            name: jolokia
+            protocol: TCP
+          - containerPort: 9779
+            name: prometheus
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: "/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
