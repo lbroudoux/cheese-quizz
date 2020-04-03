@@ -2,12 +2,12 @@
 
 A fun cheese quizz deployed on OpenShift and illustrating cloud native technologies like Quarkus, Istio Service Mesh, CodeReady Workspaces, Strimzi Kafka Operator, Fuse Online/Syndesis, Tekton pipelines and ArgoCD.
 
-[![Contribute](https://che.openshift.io/factory/resources/factory-contribute.svg)](https://codeready-workspaces.apps.cluster-paris-a2cb.paris-a2cb.example.opentlc.com/f?url=https://github.com/lbroudoux/cheese-quizz)
+[![Contribute](https://che.openshift.io/factory/resources/factory-contribute.svg)](https://codeready-workspaces.apps.cluster-lemans-11d9.lemans-11d9.example.opentlc.com/f?url=https://github.com/lbroudoux/cheese-quizz)
 
 
 ## Setup
 
-Plese initialize and configure following components in this order:
+Please initialize and configure following components in this order:
 
 * A `cheese-quizz` project for holding your project component
     * Add this label: `oc label namespace/cheese-quizz istio.io/member-of=istio-system`
@@ -29,4 +29,13 @@ Plese initialize and configure following components in this order:
 * CodeReady Workspaces deployed onto `workspaces` project with:
 ** `quay.io/lbroudoux/che-plugin-registry:master` as the `pluginRegistryImage`
 ** `true` for `tlsSupport`
-** `CHE_INFRA_KUBERNETES_PVC_WAIT__BOUND: 'false'` as `customCheProperties`
+** `CHE_INFRA_KUBERNETES_PVC_WAIT__BOUND: 'false'` as `server.customCheProperties`
+
+
+
+
+
+$ oc -n argocd apply -f https://raw.githubusercontent.com/argoproj/argo-cd/v1.4.2/manifests/install.yaml
+
+
+{"email":"david.clauvel@gmail.com","username":"David Clauvel","cheese":"Cheddar"}
