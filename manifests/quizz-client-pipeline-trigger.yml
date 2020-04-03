@@ -5,6 +5,12 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Validate=false
 spec:
+  params:
+  - name: gitrevision
+    description: The git revision
+    default: master
+  - name: gitrepositoryurl
+    description: The git repository url
   resourcetemplates:
   - apiVersion: tekton.dev/v1alpha1
     kind: PipelineResource
