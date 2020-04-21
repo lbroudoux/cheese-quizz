@@ -31,7 +31,41 @@ Please initialize and configure following components in this order:
 ** `true` for `tlsSupport`
 ** `CHE_INFRA_KUBERNETES_PVC_WAIT__BOUND: 'false'` as `server.customCheProperties`
 
-
+```yml
+apiVersion: org.eclipse.che/v1
+kind: CheCluster
+metadata:
+  name: codeready-workspaces
+  namespace: workspaces
+spec:
+  server:
+    cheImageTag: ''
+    cheFlavor: codeready
+    devfileRegistryImage: ''
+    pluginRegistryImage: 'quay.io/lbroudoux/che-plugin-registry:master'
+    tlsSupport: true
+    selfSignedCert: false
+    customCheProperties:
+      CHE_INFRA_KUBERNETES_PVC_WAIT__BOUND: 'false'
+  database:
+    externalDb: false
+    chePostgresHostName: ''
+    chePostgresPort: ''
+    chePostgresUser: ''
+    chePostgresPassword: ''
+    chePostgresDb: ''
+  auth:
+    openShiftoAuth: true
+    identityProviderImage: ''
+    externalIdentityProvider: false
+    identityProviderURL: ''
+    identityProviderRealm: ''
+    identityProviderClientId: ''
+  storage:
+    pvcStrategy: per-workspace
+    pvcClaimSize: 1Gi
+    preCreateSubPaths: true
+```
 
 
 
