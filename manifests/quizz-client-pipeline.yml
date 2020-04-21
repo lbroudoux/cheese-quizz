@@ -20,18 +20,28 @@ spec:
     params:
     - name: componentName
       value: '$(params.componentName)'
-  - name: apply-image
-    taskRef:
-      name: oc-apply-deployment
+  - name: ensure-no-triggers
+    params:
+      - name: componentName
+        value: $(params.componentName)
     runAfter:
       - build-image
+    taskRef:
+      kind: Task
+      name: oc-ensure-no-triggers
+  - name: apply-image
     params:
-    - name: componentName
-      value: '$(params.componentName)'
-    - name: containerName
-      value: '$(params.containerName)'
-    - name: imageUrl
-      value: '$(params.imageUrl)'
+      - name: componentName
+        value: $(params.componentName)
+      - name: containerName
+        value: $(params.containerName)
+      - name: imageUrl
+        value: $(params.imageUrl)
+    runAfter:
+      - ensure-no-triggers
+    taskRef:
+      kind: Task
+      name: oc-apply-deployment
   - name: deploy
     taskRef:
       name: oc-deploy

@@ -1,0 +1,17 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: oc-ensure-no-triggers
+spec:
+  inputs:
+    params:
+      - name: componentName
+        default: sample
+        description: The name of the component
+  steps:
+  - name: patch
+    image: quay.io/openshift/origin-cli:latest
+    command: ["/bin/bash", "-c"]
+    args:
+    - |-
+        oc set triggers dc/$(inputs.params.componentName) --remove-all
