@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/component: frontend
     app.kubernetes.io/instance: cheese-quizz-client
     app.kubernetes.io/part-of: cheese-quizz-app
-    app.openshift.io/runtime: java
+    app.openshift.io/runtime: quarkus
   annotations:
     app.openshift.io/vcs-ref: master
     app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'

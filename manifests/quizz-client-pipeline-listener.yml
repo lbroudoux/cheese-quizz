@@ -4,7 +4,7 @@ metadata:
   name: tekton-triggers-role
 rules:
 - apiGroups:
-  - tekton.dev
+  - triggers.tekton.dev
   resources:
   - eventlisteners
   - triggerbindings
@@ -12,6 +12,17 @@ rules:
   - pipelineresources
   verbs:
   - get
+- apiGroups:
+  - ""
+  # secrets are only needed for Github/Gitlab interceptors, serviceaccounts only for per trigger authorization
+  resources:
+  - secrets
+  - configmaps
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - tekton.dev
   resources:
@@ -37,7 +48,7 @@ roleRef:
   kind: Role
   name: tekton-triggers-role
 ---
-apiVersion: tekton.dev/v1alpha1
+apiVersion: triggers.tekton.dev/v1alpha1
 kind: EventListener
 metadata:
   name: quizz-client-pipeline-listener
