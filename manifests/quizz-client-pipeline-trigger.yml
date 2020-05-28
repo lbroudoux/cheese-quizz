@@ -32,7 +32,7 @@ spec:
     spec:
       pipelineRef:
         name: quizz-client-pipeline
-      serviceAccount: 'pipeline'
+      #serviceAccount: 'pipeline'
       params:
       - name: componentName
         value: cheese-quizz-client
