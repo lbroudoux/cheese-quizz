@@ -87,7 +87,11 @@ We need to setup the following resources for our demonstration:
     * `istio.io/member-of=istio-system`
     * `kiali.io/member-of=istio-system`
 
-* A `Kafka` broker CR into `cheese-quizz` letting the default properties
+* A `cheese-quizz-function` project for holding the serverless part and the Kafka broker
+
+* A `Kafka` broker CR into `cheese-quizz-function` letting the default properties
+  * `oc create -f manifest/kafka.yml -n cheese-quizz-function`
+  * `oc create -f manifest/kafka-topic.yml -n cheese-quizz-function`
 
 Start deploying the components needed at the beginning of this demo, we'll deploy the other ones later on.
 
