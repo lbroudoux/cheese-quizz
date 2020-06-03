@@ -202,7 +202,7 @@ Istio proxies automatically retry doing the invocation to `v2` because a number 
 * It's a HTTP `GET` request that is supposed to be idempotent (so replay is safe),
 * We're in simple HTTP with no TLS so the headers inspectation allow determine these conditions.
 
-An optimal way of managing this kind of issue would be to declare a `CircuitBreaker` for handling this problem more efficiently. Circuit breaker policy will be in charge to detect Pod return ing errors and evict them from the elligible targets pool for a configured time. Then, later on the endpoint will be re-tried and will re-join the pool if erverything is back to normal.
+An optimal way of managing this kind of issue would be to declare a `CircuitBreaker` for handling this problem more efficiently. Circuit breaker policy will be in charge to detect Pod return ing errors and evict them from the elligible targets pool for a configured time. Then, the endpoint will be re-tried and will re-join the pool if erverything is back to normal.
 
 Let's apply the circuit breaker configuration to our question `DestinationRule`:
 
@@ -212,7 +212,11 @@ oc apply -f istiofiles/dr-cheese-quizz-question-cb -n cheese-quizz
 
 Checking the traces once again in Kiali, you should no longer see any errors! 
 
-#### Timeout management
+#### Timeout/retries management
+
+Pursuing with network resiliency features of OpenShift Service Mesh, let's check now how to handle timeouts.
+
+Start by simulating some latencies on the `v3` deployed Pod. For that, we can remote log to shell and invoke an embedded endpoint that will make the pod slow. Here is bellow the sequence of commands you'll need to adapt and run:
 
 ````
 $ oc get pods -n cheese-quizz | grep v3
@@ -227,15 +231,47 @@ sh-4.4$ exit
 exit
 ````
 
+Back to the browser window you should now have some moistures displayed when application tries to reach the `v3` question of the quizz.
+
 <img src="./assets/timeout-quizz.png" width="400">
+
+Before digging and solving this issue, let's review the application configuration :
+* A 3 seconds timeout is configured within the Pod handling the `v3` question. Let see the [question source code](https://github.com/lbroudoux/cheese-quizz/blob/master/quizz-question/src/main/java/com/github/lbroudoux/cheese/CheeseResource.java#L110)
+* A 1.5 seconds timeout is configured within the Pod handling the client. Let see the [client configuration](https://github.com/lbroudoux/cheese-quizz/blob/master/quizz-client/src/main/resources/application.properties#L14)
+
+Checking the distributed traces within Kiali console we can actually see that the request takes 1.5 seconds before returning an error:
 
 ![kiali-timeout-v3](./assets/kiali-timeout-v3.png)
 
+In order to make our application more resilient, we have to start by creating new replicas, so scale the `v3` deployment.
+
 ```
-oc scale deployment/cheese-quizz-question-v3 --replicas=2 -n quotegame
+oc scale deployment/cheese-quizz-question-v3 --replicas=2 -n cheese-quizz
 ```
 
+Newly created pod will serve requests without timeout but we can see in the Kiali console that the service `cheese-quizz-question` remains degraded (despite green arrows joinining `v3` Pods).
+
+However there's still some errors in distributed traces. You can inspect what's going on using Jaeger and may check that there's still some invocations going to the slow `v3` pod.
+
+The `CircuitBreaker` policy applied previsouly does not do anything here because the issue is not an application problem that can be detected by Istio proxy. The result of a timed out invocation remains uncertain, but we know that in our case - an idempotent `GET` HTTP request - we can retry the invocation.
+
+Let's apply for this a new `VirtualService` policy that will involve a retry on timeout.
+
+```
+oc apply -f istiofiles/vs-cheese-quizz-question-all-retry-timeout.yml -n cheese-quizz
+```
+
+Once applied, you should not see errors on the GUI anymore. When digging deep dive into the distributed traces offered by OpenShift Service Mesh, you may however see errors traces. Getting into the details, you see that detailed parameters of the `VirtualService` are applied: Istio do not wait longer than 100 ms before making another attempt and finally reaching a valid endpoint.
+
+![kiali-all-cb-timeout-retry-traces](./assets/kiali-all-cb-timeout-retry-traces.png)
+
+The Kiali console grap allow to check that - from a end user point of view - the service is available and green. We can see that time-to-time the HTTP throughput on `v3` may be reduced due to some failing attempts but we have now great SLA even if we've got one `v2` Pod failing and one `v3` Pod having response time issues:
+
+![kiali-all-cb-timeout-retry](./assets/kiali-all-cb-timeout-retry.png)
+
 #### Security with MTLS
+
+Let's try applying Mutual TLS on our destinations:
 
 ```
 oc apply -f istiofiles/dr-cheese-quizz-question-mtls -n cheese-quizz
