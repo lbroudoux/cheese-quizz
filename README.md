@@ -12,7 +12,7 @@ A fun cheese quizz deployed on OpenShift and illustrating cloud native technolog
 
 ## Start here for viewing the code
 
-[![Contribute](https://che.openshift.io/factory/resources/factory-contribute.svg)](https://codeready-workspaces.apps.cluster-lemans-7d9e.lemans-7d9e.example.opentlc.com/f?url=https://github.com/lbroudoux/cheese-quizz)
+[![Contribute](https://che.openshift.io/factory/resources/factory-contribute.svg)](https://codeready-workspaces.apps.cluster-lemans-0014.lemans-0014.example.opentlc.com/f?url=https://github.com/lbroudoux/cheese-quizz)
 
 ## Cluster Setup
 
@@ -279,6 +279,20 @@ oc apply -f istiofiles/dr-cheese-quizz-question-mtls -n cheese-quizz
 
 ### CodeReady Workspaces demonstration
 
+![crw-workspace-creation](./assets/crw-workspace-creation.png)
+
+![crw-workspace](./assets/crw-workspace.png)
+
+![crw-model-install](./assets/crw-model-install.png)
+
+![crw-model-question-compile](./assets/crw-question-compile.png)
+
+![crw-model-client-compile](./assets/crw-client-compile.png)
+
+![crw-model-client-updated-preview](./assets/crw-client-updated-preview.png)
+
+![crw-git-push](./assets/crw-git-push.png)
+
 ### OpenShift Pipelines demonstration
 
 ```
@@ -290,6 +304,12 @@ oc create -f manifests/quizz-client-pipeline.yml -n cheese-quizz
 oc create -f manifests/quizz-client-pipeline-trigger.yml -n cheese-quizz
 oc create -f manifests/quizz-client-pipeline-listener.yml -n cheese-quizz
 ``` 
+
+![tekton-pipeline-trigger](tekton-pipeline-trigger.png)
+
+![tekton-pipeline-logs](tekton-pipeline-logs.png)
+
+![tekton-pipeline-success](tekton-pipeline-success.png)
 
 ### OpenShift Serverless demonsration
 
