@@ -119,9 +119,11 @@ cheese-quizz-client-cheese-quizz.apps.cluster-lemans-0014.lemans-0014.example.op
 
 and open it into a browser. You shoul get the following:
 
-![cheddar-quizz](./assets/cheddar-quizz.png)
+<img src="./assets/cheddar-quizz.png" width="400">
 
 ### OpenShift ServiceMesh demonstration
+
+#### Canary release and blue-green deployment
 
 Introduce new `v2` question using Canary Release and header-matching routing rules:
 
@@ -131,7 +133,7 @@ oc apply -f manifests/vs-cheese-quizz-question-virtualservice-v1-v2-canary.yml -
 
 Using the hamburger menu on the GUI, you should be able to ubscribe the `Beta Program` and see the new Emmental question appear ;-) 
 
-![emmental-quizz](./assets/emmental-quizz.png)
+<img src="./assets/emmental-quizz.png" width="400">
 
 Now turning on the `Auto Refresh` feature, you should be able to visualize everything into Kiali, showing how turning on and off the Beta subscription has influence on the visualization of networks routes.
 
@@ -147,6 +149,8 @@ Of course we can repeat the same kind of process and finally introduce our `v3` 
 oc apply -f manifests/vs-cheese-quizz-question-virtualservice-all.yml -n cheese-quizz
 ```
 
+#### Circuit breaker and observability
+
 Now let's check some network resiliency features of OpenShift Service Mesh.
 
 Start by simulating some issues on the `v2` deployed Pod. For that, we can remote log to shell and invoke an embedded endpoint that will make the pod fail. Here is bellow the sequence of commands you'll need to adapt and run:
@@ -155,7 +159,7 @@ Start by simulating some issues on the `v2` deployed Pod. For that, we can remot
 $ oc get pods -n cheese-quizz | grep v2
 cheese-quizz-question-v2-847df79bd8-9c94t                        2/2     Running     0          5d19h
 $ oc rsh cheese-quizz-question-v2-847df79bd8-9c94t
------------ OUTPUT: --------------------
+----------- TERMINAL MODE: --------------------
 Defaulting container name to greeter-service.
 Use 'oc describe pod/cheese-quizz-question-v2-847df79bd8-9c94t -n cheese-quizz' to see all of the containers in this pod.
 sh-4.4$ curl localhost:8080/api/cheese/flag/misbehave
@@ -167,7 +171,7 @@ command terminated with exit code 130
 
 Back to the browser window you should now have a little mouse displayed when application tries to reach the `v2` question of the quizz.
 
-![error-quizz](./assets/error-quizz.png)
+<img src="./assets/error-quizz.png" width="400">
 
 Using obervability features that comes with OpenShift Service Mesh like Kiali and Jaeger, you are now able to troubleshoot and check where the problem comes from (imagine that we already forgot we did introduce the error ;-))
 
@@ -206,15 +210,35 @@ Let's apply the circuit breaker configuration to our question `DestinationRule`:
 oc apply -f istiofiles/dr-cheese-quizz-question-cb -n cheese-quizz
 ```
 
-Checking the traces once again in Kiali, you should not see any errors in traces ! 
+Checking the traces once again in Kiali, you should no longer see any errors! 
 
+#### Timeout management
 
-```
-oc apply -f istiofiles/dr-cheese-quizz-question-mtls -n cheese-quizz
-```
+````
+$ oc get pods -n cheese-quizz | grep v3
+cheese-quizz-question-v3-9cfcfb894-tjtln                         2/2     Running     0          6d1h
+$ oc rsh cheese-quizz-question-v3-9cfcfb894-tjtln
+----------- TERMINAL MODE: --------------------
+Defaulting container name to greeter-service.
+Use 'oc describe pod/cheese-quizz-question-v3-9cfcfb894-tjtln -n cheese-quizz' to see all of the containers in this pod.
+sh-4.4$ curl localhost:8080/api/cheese/flag/timeout
+Following requests to / will wait 3s
+sh-4.4$ exit
+exit
+````
+
+<img src="./assets/timeout-quizz.png" width="400">
+
+![kiali-timeout-v3](./assets/kiali-timeout-v3.png)
 
 ```
 oc scale deployment/cheese-quizz-question-v3 --replicas=2 -n quotegame
+```
+
+#### Security with MTLS
+
+```
+oc apply -f istiofiles/dr-cheese-quizz-question-mtls -n cheese-quizz
 ```
 
 ### CodeReady Workspaces demonstration
