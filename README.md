@@ -123,7 +123,7 @@ and open it into a browser. You shoul get the following:
 
 ### OpenShift ServiceMesh demonstration
 
-Introduce new `v2` questino using Canary Release and header-matching routing rules:
+Introduce new `v2` question using Canary Release and header-matching routing rules:
 
 ```
 oc apply -f manifests/vs-cheese-quizz-question-virtualservice-v1-v2-canary.yml -n cheese-quizz
@@ -135,22 +135,82 @@ Using the hamburger menu on the GUI, you should be able to ubscribe the `Beta Pr
 
 Now turning on the `Auto Refresh` feature, you should be able to visualize everything into Kiali, showing how turning on and off the Beta subscription has influence on the visualization of networks routes.
 
+Once we're confident with the `v2` Emmental question, we can turn on Blue-Green deployment process using weighted routes on the Istio `VirtualService`. We apply a 70-30 repartition:
 
 ```
 oc apply -f manifests/vs-cheese-quizz-question-virtualservice-v1-70-v2-30.yml -n cheese-quizz
 ```
 
+Of course we can repeat the same kind of process and finally introduce our `v3` Camembert question into the game. Finally, we may choose to route evenly to all the different quizz questions, applying a even load-balancer rules on the `VirtualService`: 
+
 ```
 oc apply -f manifests/vs-cheese-quizz-question-virtualservice-all.yml -n cheese-quizz
 ```
 
-```
-oc scale deployment/cheese-quizz-question-v2 --replicas=2 -n cheese-quizz
-oc apply -f manifests/dr-cheese-quizz-question-cb -n cheese-quizz
-```
+Now let's check some network resiliency features of OpenShift Service Mesh.
+
+Start by simulating some issues on the `v2` deployed Pod. For that, we can remote log to shell and invoke an embedded endpoint that will make the pod fail. Here is bellow the sequence of commands you'll need to adapt and run:
 
 ```
-oc apply -f manifests/dr-cheese-quizz-question-mtls -n cheese-quizz
+$ oc get pods -n cheese-quizz | grep v2
+cheese-quizz-question-v2-847df79bd8-9c94t                        2/2     Running     0          5d19h
+$ oc rsh cheese-quizz-question-v2-847df79bd8-9c94t
+----------- OUTPUT: --------------------
+Defaulting container name to greeter-service.
+Use 'oc describe pod/cheese-quizz-question-v2-847df79bd8-9c94t -n cheese-quizz' to see all of the containers in this pod.
+sh-4.4$ curl localhost:8080/api/cheese/flag/misbehave
+Following requests to / will return a 503
+sh-4.4$ exit
+exit
+command terminated with exit code 130
+```
+
+Back to the browser window you should now have a little mouse displayed when application tries to reach the `v2` question of the quizz.
+
+![error-quizz](./assets/error-quizz.png)
+
+Using obervability features that comes with OpenShift Service Mesh like Kiali and Jaeger, you are now able to troubleshoot and check where the problem comes from (imagine that we already forgot we did introduce the error ;-))
+
+Thus you can see the Pod causing troubles with Kiali graph:
+
+![kiali-error-v2](./assets/kiali-error-v2.png)
+
+And inspect Jeager traces to see the details of an error:
+
+![kiali-traces-v2](./assets/kiali-traces-v2.png)
+
+In order to make our application more resilient, we have to start by creating new replicas, so scale the `v2` deployment. 
+
+```
+oc scale deployment/cheese-quizz-question-v2 --replicas=2 -n cheese-quizz
+```
+
+Newly created pod will serve requests without error but we can see in the Kiali console that the service `cheese-quizz-question` remains degraded (despite green arrows joinining `v2` Pods).
+
+![kiali-degraded-v2](./assets/kiali-degraded-v2.png)
+
+There's still some errors in distributed traces. You can inspect what's going on using Jaeger and may check that there's still some invocations going to the faulty `v2` pod.
+
+![kiali-replay-v2](./assets/kiali-replay-v2.png)
+
+Istio proxies automatically retry doing the invocation to `v2` because a number of conditions are present:
+* There's a second replica present,
+* It's a HTTP `GET` request that is supposed to be idempotent (so replay is safe),
+* We're in simple HTTP with no TLS so the headers inspectation allow determine these conditions.
+
+An optimal way of managing this kind of issue would be to declare a `CircuitBreaker` for handling this problem more efficiently. Circuit breaker policy will be in charge to detect Pod return ing errors and evict them from the elligible targets pool for a configured time. Then, later on the endpoint will be re-tried and will re-join the pool if erverything is back to normal.
+
+Let's apply the circuit breaker configuration to our question `DestinationRule`:
+
+```
+oc apply -f istiofiles/dr-cheese-quizz-question-cb -n cheese-quizz
+```
+
+Checking the traces once again in Kiali, you should not see any errors in traces ! 
+
+
+```
+oc apply -f istiofiles/dr-cheese-quizz-question-mtls -n cheese-quizz
 ```
 
 ```
