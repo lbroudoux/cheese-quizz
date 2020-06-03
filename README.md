@@ -291,9 +291,9 @@ oc apply -f istiofiles/dr-cheese-quizz-question-mtls -n cheese-quizz
 
 ![crw-model-client-updated-preview](./assets/crw-client-updated-preview.png)
 
-![crw-git-push](./assets/crw-git-push.png)
-
 ### OpenShift Pipelines demonstration
+
+Ensure the different custom resources for Tekton / OpenShift Pipelines are installed into the `cheese-quizz` project:
 
 ```
 oc create -f manifests/oc-deploy-task.yml -n cheese-quizz
@@ -305,11 +305,27 @@ oc create -f manifests/quizz-client-pipeline-trigger.yml -n cheese-quizz
 oc create -f manifests/quizz-client-pipeline-listener.yml -n cheese-quizz
 ``` 
 
-![tekton-pipeline-trigger](tekton-pipeline-trigger.png)
+Configure a `Webhook` trigger on your Git repository holding the sources. First you have to retrieve the full URL of the Tekton `Trigger` that must be invoked:
 
-![tekton-pipeline-logs](tekton-pipeline-logs.png)
+```
+oc get route/quizz-client-pipeline-listener -n cheese-quizz | grep quizz-client-pipeline-listener | awk '{print $2}'
+```
 
-![tekton-pipeline-success](tekton-pipeline-success.png)
+Then follow your preferred Git repo documentation to set such a webhook. Here's an example below using GitHub on this repository: 
+
+![tekton-github-trigger](./assets/tekton-github-trigger.png)
+
+Now that this part is OK, you can finish your work into CodeReady Workspaces by commiting the changed file and pushing to your remote repository:
+
+![crw-git-push](./assets/crw-git-push.png)
+
+And this should simply trigger the Tekton / OpenShift Pipeline we just created !
+
+![tekton-pipeline-trigger](./assets/tekton-pipeline-trigger.png)
+
+![tekton-pipeline-logs](./assets/tekton-pipeline-logs.png)
+
+![tekton-pipeline-success](./assets/tekton-pipeline-success.png)
 
 ### OpenShift Serverless demonsration
 
