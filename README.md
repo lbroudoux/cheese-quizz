@@ -279,17 +279,43 @@ oc apply -f istiofiles/dr-cheese-quizz-question-mtls -n cheese-quizz
 
 ### CodeReady Workspaces demonstration
 
+This is the beginning of **Part 2** of the demonstration. After having installed CodeReady Workspaces as specified in **Cluster Setup**, start retrieving the route to access it:
+
+```
+oc get route/codeready -n workspaces | grep codeready | awk '{print $2}'
+```
+
+You can use this route to configure the `Developer Workspace` badge as I did it at the begining of this README file. Now clicking this badge in a new browser tab or window, you'll ask CodeReady Workspaces to create a new workspace for you.
+
+> If it's the first time, you're connecting the service, you'll need to authenticate and approve the reuse of your profile information.
+
+Worskspace creation waiting screen:
+
 ![crw-workspace-creation](./assets/crw-workspace-creation.png)
+
+After some minutes, the workspace is initialized with the source files coming from a Git clone. You can spend time explaining the relationship between the `devfile.yaml` at the root of this repotisotory and the content of the wokspace.
 
 ![crw-workspace](./assets/crw-workspace.png)
 
+Now let's build and deploy some componentn in order to illustrate the development inner loop.
+
+Using the scripts on the right hand panel, you will have to first locally install the `quizz-model` component with the **Model - Install** script. Here's the terminal results below:
+
 ![crw-model-install](./assets/crw-model-install.png)
+
+Then, you will be able to launch the `quizz-question` module in Quarkus development monde using the **Question - Compile (Dev Mode)** script. CRW asks if current process should be made available through an OpenShift Route for accessing the pod:
 
 ![crw-model-question-compile](./assets/crw-question-compile.png)
 
+Finally, you can launch the `quizz-question` module using the **Client - Compile (Dev Mode)** script. Here you will have access to the GUI, running in CRW, when launching the preview:
+
 ![crw-model-client-compile](./assets/crw-client-compile.png)
 
+It's time to talk a little bit about Quarkus, demo hot reloading and explain how we're gonna implement the "Like Cheese" screen by modifying `src/main/resources/META-INF/index.html` and test it locally:
+
 ![crw-model-client-updated-preview](./assets/crw-client-updated-preview.png)
+
+Before commiting our work, we'd like to talk a bit about how to transition to the outer-loop and trigger deployment pipeline.
 
 ### OpenShift Pipelines demonstration
 
@@ -323,11 +349,70 @@ And this should simply trigger the Tekton / OpenShift Pipeline we just created !
 
 ![tekton-pipeline-trigger](./assets/tekton-pipeline-trigger.png)
 
+You can display the different task logs in OpenShift console:
+
 ![tekton-pipeline-logs](./assets/tekton-pipeline-logs.png)
+
+And finally ensure that our pipeline is successful.
 
 ![tekton-pipeline-success](./assets/tekton-pipeline-success.png)
 
-### OpenShift Serverless demonsration
+We can now also demonstrate the new fetaure deployed onto our OpenShift cluster.
+
+### OpenShift Serverless demonstration
+
+This is the beginning of **Part 3** of the demonstration. Now you're gonne link the "Like Cheese" feature with a message publication within a Kafka broker. So first, we have to deploy a broker and declare a topic we'll use to advert of new `CheeseLike` messages.
+
+```
+oc create -f manifests/kafka.yml -n cheese-quizz-function
+oc create -f manifests/kafka-topic.yml -n cheese-quizz-function
+```
+
+Now just deploy our `quizz-like-function` module that is a NodeJS app into the `cheese-quizz-function` project using the Developer Console, adding a component from Git. Here's the capture of the long form:
+
+![like-function-creation-1](./assets/like-function-creation-1.png)
+![like-function-creation-2](./assets/like-function-creation-2.png)
+![like-function-creation-3](./assets/like-function-creation-3.png)
+
+Because we use graphical wizard for creating our Knative Service, we do not have the opportunity to set environment variables. Our application should communicate with Kafka broker and also specified it is using a specific 4000 TCP port. You can do this using the `kn` command line tool:
+
+```
+kn service update cheese-quizz-like-function -p 4000 -e KAFKA_HOST=my-cluster-kafka-bootstrap.cheese-quizz-function.svc.cluster.local:9092
+```
+
+Still using the `kn` tool, we can now see that Knative has created for us 2 revisions. One being the one created at first after form validation, the pther resulting of the environment variable and port modification:
+
+```
+kn revision list -n cheese-quizz-function
+NAME                                 SERVICE                      TRAFFIC   TAGS   GENERATION   AGE     CONDITIONS   READY   REASON
+cheese-quizz-like-function-gfdjz-5   cheese-quizz-like-function                    2            6m52s   3 OK / 4     True    
+cheese-quizz-like-function-khzw9     cheese-quizz-like-function                    1            37m     0 OK / 4     False   ExitCode1 : Container failed with: info using  ...
+```
+
+We see that first revision fails to start because of missing environment variable and that latest revision is now ready to receive traffic. We have now to ditribute traffic to this revision. This can be done from the Developer Console when accessing the service resources and hitting the **Set Traffic Distribution** on the right hand panel:
+
+![knative-traffic-setting](./assets/knative-traffic-setting.png)
+
+You'll see now that an arrow indicating that revision receives traffic appears on the Developer Console. Also we can check the traffic distribution using the CLI:
+
+```
+kn revision list -n cheese-quizz-function
+NAME                                 SERVICE                      TRAFFIC   TAGS   GENERATION   AGE   CONDITIONS   READY   REASON
+cheese-quizz-like-function-gfdjz-5   cheese-quizz-like-function   100%      v1     4            27m   3 OK / 4     True    
+cheese-quizz-like-function-khzw9     cheese-quizz-like-function                    1            58m   0 OK / 4     False   ExitCode1 : Container failed with: info using  ...
+```
+
+> Note: we could have achieved the same result only using the CLI commands below:
+```
+kn service update cheese-quizz-like-function --tag v1=cheese-quizz-like-function-gfdjz-5
+kn service update cheese-quizz-like-function  --traffic v1=100
+```
+
+Now just demo how Pod are dynamically popped and drained when invocation occurs on function route. You may just click on the access link on the Developer Console or retrieve exposed URL from the command line:
+
+```
+kn service describe cheese-quizz-like-function -o yaml -n cheese-quizz-function | yq r - 'status.url'
+```
 
 ### Fuse Online demonstration
 

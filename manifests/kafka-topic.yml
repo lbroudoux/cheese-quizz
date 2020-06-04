@@ -1,0 +1,12 @@
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  labels:
+    strimzi.io/cluster: my-cluster
+  name: cheese-quizz-likes
+spec:
+  config:
+    message.format.version: 2.1-IV2
+  partitions: 1
+  replicas: 1
+  topicName: cheese-quizz-likes
