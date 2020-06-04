@@ -1,5 +1,7 @@
 # cheese-quizz
 
+![cheese-quizz](./assets/cheese-quizz.png)
+
 A fun cheese quizz deployed on OpenShift and illustrating cloud native technologies like Quarkus, Istio Service Mesh, CodeReady Workspaces, Strimzi Kafka Operator, Fuse Online/Syndesis, Tekton pipelines and ArgoCD.
 
 ![cheese-quizz-overview](./assets/cheese-quizz-overview.png)
