@@ -405,7 +405,7 @@ cheese-quizz-like-function-khzw9     cheese-quizz-like-function                 
 > Note: we could have achieved the same result only using the CLI commands below:
 ```
 kn service update cheese-quizz-like-function --tag v1=cheese-quizz-like-function-gfdjz-5
-kn service update cheese-quizz-like-function  --traffic v1=100
+kn service update cheese-quizz-like-function --traffic v1=100
 ```
 
 Now just demo how Pod are dynamically popped and drained when invocation occurs on function route. You may just click on the access link on the Developer Console or retrieve exposed URL from the command line:
@@ -414,9 +414,94 @@ Now just demo how Pod are dynamically popped and drained when invocation occurs 
 kn service describe cheese-quizz-like-function -o yaml -n cheese-quizz-function | yq r - 'status.url'
 ```
 
+Now that we also have this URL, we should update the `cheese-quizz-client-config` ConfigMap that should hold this value and serve it to our GUI.
+
+```
+$ oc edit cm/cheese-quizz-client-config -n cheese-quizz
+----------- TERMINAL MODE: --------------------
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+data:
+  application.properties: |-
+    # Configuration file
+    # key = value
+    %kube.quizz-like-function.url=http://cheese-quizz-like-function-cheese-quizz-function.apps.cluster-lemans-0014.lemans-0014.example.opentlc.com
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2020-06-04T09:55:07Z"
+  name: cheese-quizz-client-config
+  namespace: cheese-quizz
+  resourceVersion: "4656024"
+  selfLink: /api/v1/namespaces/cheese-quizz/configmaps/cheese-quizz-client-config
+  uid: 7a97745b-abc3-4b22-aaad-07b566fca3cb
+~                                                                             
+~                                                                           
+~                                                                             
+-- INSERT --
+:wq
+configmap/cheese-quizz-client-config edited
+```
+
+> Do not forget to delete the remaining `cheese-quizz-client` pod to ensure reloading of changed ConfigMap.
+
 ### Fuse Online demonstration
 
-$ oc -n argocd apply -f https://raw.githubusercontent.com/argoproj/argo-cd/v1.4.2/manifests/install.yaml
+This is the final part where you'll reuse the events produced within Kafka broker in order to turn into business insights !
 
+First thing first, create a Salesforce connector within your Syndesis/Fuse Online instance. This can be simply done using thet [guide](https://access.redhat.com/documentation/en-us/red_hat_fuse/7.6/html-single/connecting_fuse_online_to_applications_and_services/index#connecting-to-sf_connectors).
 
-{"email":"david.clauvel@gmail.com","username":"David Clauvel","cheese":"Cheddar"}
+Then you'll have to create a connector to our Kafka instance located at `my-cluster-kafka-bootstrap.cheese-quizz-function.svc.cluster.local:9092`.
+
+You should now have these 2 connectors ready to use and you can create a new integration, we'll call `cheese-quizz-likes to Salesforce'.
+
+![syndesis-connectors](./assets/syndesis-connectors.png)
+
+When creating a new integration, you shoud select the Kafka connector as a source, subscribing to the topic called `cheese-quizz-likes` and filling out this example `JSON Instance` :
+
+```json
+{
+  "email": "john.doe@gmail.com",
+  "username": "John Doe",
+  "cheese": "Cheddar"
+}
+```
+
+You will be asked to fill out some details about data type and description like below:
+
+![syndesis-event-type](./assets/syndesis-event-type.png)
+
+Just after that you'll have to select the Salesforce connector as the integration end, picking the **New Record** action and choosing the **Lead** data type. Finally, in the next screen, you'll have to add a `Data Mapper` intermediary step to allow transformation of the Kafka message data.
+
+![syndesis-integration](./assets/syndesis-integration.png)
+
+We'll realize a mapping between following fields:
+* `username` will be split into `FirstName` and `LastName`,
+* `email` will remain `email`,
+* `cheese` will fedd the `Description` field
+
+We'll add two extras constants on the left hand pane:
+* `Quizz Player` will feed the `Company` field that is required on the Salesforce side,
+* `cheese-quizz-app` will feed the `LeadSource`field.
+
+You should have something like this:
+
+![syndesis-mapper](./assets/syndesis-mapper.png)
+
+Hit the **Save and Publish** button and wait a minute or two that Syndesis built and publish the integration component. Once OK your should be able to fill out the connoisseur form on the app side and hit the **Like** button. Just see Knative popping out a new pod for processing the HTTP call and producing a message into the Kafka broker. Then the Syndesis integration route will take care of transformaing this message into a Slaesforce Lead.
+
+The result should be something like this on the Slaesforce side:
+
+![salesforce-lead](./assets/salesforce-lead.png)
+
+You can track activity of the integration route, looking at the **Activity** tab in the route details:
+
+![syndesis-activity](./assets/syndesis-activity.png)
+
+### ArgoCD bonus demonstration ;-)
+
+```
+oc -n argocd apply -f https://raw.githubusercontent.com/argoproj/argo-cd/v1.4.2/manifests/install.yaml
+```

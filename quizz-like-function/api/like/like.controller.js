@@ -11,7 +11,7 @@ exports.createLike = function (req, res) {
   let payloads = [{ topic: kafkaLikeTopic, messages: buffer }]
   
   producer.send(payloads, function (err, data) {
-    console.log(err, data);
+    console.log("Error: " + err, "Data: " + data);
     if (err) {
       res.status(500).send(JSON.stringify({
         "messages": "Error while sending messages.",
