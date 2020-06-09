@@ -106,6 +106,7 @@ oc apply -f manifests/quizz-question-destinationrule.yml -n cheese-quizz
 oc apply -f manifests/quizz-question-virtualservice-v1.yml -n cheese-quizz
 oc create -f manifests/quizz-client-buildconfig.yml -n cheese-quizz
 oc create -f manifests/quizz-client-deploymentconfig.yml -n cheese-quizz
+oc create -f manifests/quizz-client-service.yml -n cheese-quizz
 oc create -f manifests/quizz-client-route.yml -n cheese-quizz
 oc rollout latest cheese-quizz-client -n cheese-quizz
 ```
