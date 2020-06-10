@@ -92,8 +92,8 @@ We need to setup the following resources for our demonstration:
 * A `cheese-quizz-function` project for holding the serverless part and the Kafka broker
 
 * A `Kafka` broker CR into `cheese-quizz-function` letting the default properties
-  * `oc create -f manifest/kafka.yml -n cheese-quizz-function`
-  * `oc create -f manifest/kafka-topic.yml -n cheese-quizz-function`
+  * `oc create -f manifests/kafka.yml -n cheese-quizz-function`
+  * `oc create -f manifests/kafka-topic.yml -n cheese-quizz-function`
 
 Start deploying the components needed at the beginning of this demo, we'll deploy the other ones later on.
 
@@ -120,7 +120,7 @@ $ oc get route/cheese-quizz-client -n cheese-quizz |grep cheese-quizz-client |aw
 cheese-quizz-client-cheese-quizz.apps.cluster-lemans-0014.lemans-0014.example.opentlc.com
 ```
 
-and open it into a browser. You shoul get the following:
+and open it into a browser. You should get the following:
 
 <img src="./assets/cheddar-quizz.png" width="400">
 
@@ -134,7 +134,7 @@ Introduce new `v2` question using Canary Release and header-matching routing rul
 oc apply -f manifests/vs-cheese-quizz-question-virtualservice-v1-v2-canary.yml -n cheese-quizz
 ```
 
-Using the hamburger menu on the GUI, you should be able to ubscribe the `Beta Program` and see the new Emmental question appear ;-) 
+Using the hamburger menu on the GUI, you should be able to subscribe the `Beta Program` and see the new Emmental question appear ;-) 
 
 <img src="./assets/emmental-quizz.png" width="400">
 
