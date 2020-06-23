@@ -11,9 +11,9 @@ spec:
       attempts: 5
       perTryTimeout: 100ms
       retryOn: 'gateway-error,connect-failure,refused-stream'
-      # Very important for guaranteed that next attempty will be done using another remote endpoint.
+      # Very important to ensure that next attempt will be done using another remote endpoint.
       # This is necessary when adding outlierDetection because in case of timeout, endpoint is not 
-      # identified as outlier.. so next attempt is made on same endpoint if retryRemoteLocalities
+      # identified as outlier... so next attempt is made on same endpoint if retryRemoteLocalities
       # is not set or set to false.
       retryRemoteLocalities: true 
     route:

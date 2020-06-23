@@ -14,7 +14,7 @@ A fun cheese quizz deployed on OpenShift and illustrating cloud native technolog
 
 ## Start here for viewing the code
 
-[![Contribute](https://che.openshift.io/factory/resources/factory-contribute.svg)](https://codeready-workspaces.apps.cluster-lemans-0b61.lemans-0b61.example.opentlc.com/f?url=https://github.com/lbroudoux/cheese-quizz)
+[![Contribute](https://che.openshift.io/factory/resources/factory-contribute.svg)](https://codeready-workspaces.apps.cluster-lemans-ff7f.lemans-ff7f.example.opentlc.com/f?url=https://github.com/lbroudoux/cheese-quizz)
 
 ## Cluster Setup
 
@@ -113,7 +113,7 @@ oc rollout latest cheese-quizz-client -n cheese-quizz
 
 ## Demonstration scenario
 
-Once above commands are issued and everything successfully deployed, retrieve the Cheese Quzz route:
+Once above commands are issued and everything successfully deployed, retrieve the Cheese Quizz route:
 
 ```
 $ oc get route/cheese-quizz-client -n cheese-quizz |grep cheese-quizz-client |awk '{print $2}' 
