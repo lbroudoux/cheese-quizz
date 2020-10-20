@@ -131,7 +131,7 @@ and open it into a browser. You should get the following:
 Introduce new `v2` question using Canary Release and header-matching routing rules:
 
 ```
-oc apply -f istiofiles/vs-cheese-quizz-question-virtualservice-v1-v2-canary.yml -n cheese-quizz
+oc apply -f istiofiles/vs-cheese-quizz-question-v1-v2-canary.yml -n cheese-quizz
 ```
 
 Using the hamburger menu on the GUI, you should be able to subscribe the `Beta Program` and see the new Emmental question appear ;-) 
@@ -143,13 +143,13 @@ Now turning on the `Auto Refresh` feature, you should be able to visualize every
 Once we're confident with the `v2` Emmental question, we can turn on Blue-Green deployment process using weighted routes on the Istio `VirtualService`. We apply a 70-30 repartition:
 
 ```
-oc apply -f istiofiles/vs-cheese-quizz-question-virtualservice-v1-70-v2-30.yml -n cheese-quizz
+oc apply -f istiofiles/vs-cheese-quizz-question-v1-70-v2-30.yml -n cheese-quizz
 ```
 
 Of course we can repeat the same kind of process and finally introduce our `v3` Camembert question into the game. Finally, we may choose to route evenly to all the different quizz questions, applying a even load-balancer rules on the `VirtualService`: 
 
 ```
-oc apply -f istiofiles/vs-cheese-quizz-question-virtualservice-all.yml -n cheese-quizz
+oc apply -f istiofiles/vs-cheese-quizz-question-all.yml -n cheese-quizz
 ```
 
 #### Circuit breaker and observability
@@ -161,7 +161,7 @@ Start by simulating some issues on the `v2` deployed Pod. For that, we can remot
 ```
 $ oc get pods -n cheese-quizz | grep v2
 cheese-quizz-question-v2-847df79bd8-9c94t                        2/2     Running     0          5d19h
-$ oc rsh cheese-quizz-question-v2-847df79bd8-9c94t
+$ oc rsh -n cheese-quizz cheese-quizz-question-v2-847df79bd8-9c94t
 ----------- TERMINAL MODE: --------------------
 Defaulting container name to greeter-service.
 Use 'oc describe pod/cheese-quizz-question-v2-847df79bd8-9c94t -n cheese-quizz' to see all of the containers in this pod.
@@ -210,7 +210,7 @@ An optimal way of managing this kind of issue would be to declare a `CircuitBrea
 Let's apply the circuit breaker configuration to our question `DestinationRule`:
 
 ```
-oc apply -f istiofiles/dr-cheese-quizz-question-cb -n cheese-quizz
+oc apply -f istiofiles/dr-cheese-quizz-question-cb.yml -n cheese-quizz
 ```
 
 Checking the traces once again in Kiali, you should no longer see any errors! 
