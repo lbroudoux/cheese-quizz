@@ -53,7 +53,7 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 1
-        name: greeter-service
+        name: quizz-question
         ports:
         - containerPort: 8080
           name: http
