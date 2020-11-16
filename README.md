@@ -224,7 +224,7 @@ Start by simulating some latencies on the `v3` deployed Pod. For that, we can re
 ````
 $ oc get pods -n cheese-quizz | grep v3
 cheese-quizz-question-v3-9cfcfb894-tjtln                         2/2     Running     0          6d1h
-$ oc rsh cheese-quizz-question-v3-9cfcfb894-tjtln
+$ oc rsh -n cheese-quizz cheese-quizz-question-v3-9cfcfb894-tjtln
 ----------- TERMINAL MODE: --------------------
 Defaulting container name to greeter-service.
 Use 'oc describe pod/cheese-quizz-question-v3-9cfcfb894-tjtln -n cheese-quizz' to see all of the containers in this pod.
@@ -271,6 +271,33 @@ Once applied, you should not see errors on the GUI anymore. When digging deep di
 The Kiali console grap allow to check that - from a end user point of view - the service is available and green. We can see that time-to-time the HTTP throughput on `v3` may be reduced due to some failing attempts but we have now great SLA even if we've got one `v2` Pod failing and one `v3` Pod having response time issues:
 
 ![kiali-all-cb-timeout-retry](./assets/kiali-all-cb-timeout-retry.png)
+
+#### Direct access through a Gateway
+
+So far we always used the classical way of entering the application through `cheese-quizz-client` pods only. It's now time to see how to use a `Gateway`. Gateway configurations are applied to standalone Envoy proxies that are running at the edge of the mesh, rather than sidecar Envoy proxies running alongside your service workloads.
+
+Before creating `Gateway` and updating the `VirtualService` to be reached by the gateway, you will needs to adapt the full `host` name in both resources below. Then apply them:
+
+```
+oc apply -f istiofiles/ga-cheese-quizz-question.yml -n cheese-quizz
+oc apply -f istiofiles/vs-cheese-quizz-question-all-gateway.yml -n cheese-quizz
+```
+
+OpenShift takes care of creating a `Route` for each and every `Gateway`. The new route is created into your mesh control plane namespace (`istio-system` here).
+
+```
+$ oc get routes -n istio-system | grep cheese-quizz-question | awk '{print $2}'
+cheese-quizz-question.apps.cluster-fdee.fdee.example.opentlc.com
+```
+
+You should now be able to directly call the `cheese-quizz-question` VirtualService: 
+
+```
+$ curl http://cheese-quizz-question.apps.cluster-fdee.fdee.example.opentlc.com/api/cheese
+hello%
+```
+
+> When working with Maistra/OpenShift Service Mesh v2.0, `enabledAutoMtls` is set to `true` by default into `istio-config` config map. This made your access wrapped into MTLS communication (between client and question OR between gateway and question) by default.
 
 #### Security with MTLS
 
