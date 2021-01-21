@@ -530,8 +530,49 @@ You can track activity of the integration route, looking at the **Activity** tab
 
 ![syndesis-activity](./assets/syndesis-activity.png)
 
-### ArgoCD bonus demonstration ;-)
+
+## GitOps setup
+
+You can use the resources from the `gitops/` folder of this repository to deploy a simplest form of the application using GitOps tooling.
+
+> We just published a simplest version for sake of simplicity but all the resources involved involved in the complex scenario may also be deployed the same manner :wink:
+
+In order to efficiently manage our Kubernetes resources within the Git repository, we have used [Kustomize](https://kustomize.io/).
+
+The default `base` configuration will deploy a quizz question referencing the **Cheddar** cheese and will present only 1 replica within the question deployment. The overlay `cluster1` configuration will override the cheese and will only display **Emmental**, it will also ask for 2 replicas within the question deployment.
+
+We will apply GitOps deployment for `cluster1` configuration.
+
+### Open Cluster Management way
+
+[Open Cluster Management](https://open-cluster-management.io/) is the upstream community project bringing Multi-cluster Management features for Kubernetes and specially for OpenShift in a flavour called [Red Hat Advanced Cluster Management](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.1/).
+
+We can use RHCAM to ensure our cheese-quizz application is deployed on one or more cluster.
+
+On the Hub cluster, start creating the required namespaces:
+
+```sh
+kubectl create ns cheese-quizz
+kubectl create ns githubcom-lbroudoux-cheese-quizz-ns
+```
+
+Then apply the resource from the `ocmfiles/` folder:
+
+```sh
+oc apply -f ocmfiles/cheese-quizz-channel.yml
+oc apply -f ocmfiles/cheese-quizz-application.yml
+```
+
+The application `PlacementRules` are such that every registered cluster having the label `environment=dev` will received a deployment of the application.
+
+We can check in below screenshot that the customization required have being applied (2 pods present in `ReplicaSet`):
+
+![gitops-ocm-deployment](./assets/gitops-ocm-deployment.png)
+
+### ArgoCD way
 
 ```
 oc -n argocd apply -f https://raw.githubusercontent.com/argoproj/argo-cd/v1.4.2/manifests/install.yaml
 ```
+
+s

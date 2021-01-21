@@ -1,0 +1,46 @@
+apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  annotations:
+    apps.open-cluster-management.io/deployables: ''
+  name: cheese-quizz
+  namespace: cheese-quizz
+spec:
+  componentKinds:
+    - group: apps.open-cluster-management.io
+      kind: Subscription
+  descriptor: {}
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - cheese-quizz
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  labels:
+    app: cheese-quizz
+  name: cheese-quizz-placement
+  namespace: cheese-quizz
+spec:
+  clusterSelector:
+    matchLabels:
+      environment: dev
+---
+kind: Subscription
+metadata:
+  annotations:
+    apps.open-cluster-management.io/git-branch: ''
+    apps.open-cluster-management.io/git-path: ./gitops/overlays/cluster1
+  labels:
+    app: cheese-quizz
+  name: cheese-quizz-subscription
+  namespace: cheese-quizz
+spec:
+  channel: githubcom-lbroudoux-cheese-quizz-ns/githubcom-lbroudoux-cheese-quizz
+  placement:
+    placementRef:
+      kind: PlacementRule
+      name: cheese-quizz-placement

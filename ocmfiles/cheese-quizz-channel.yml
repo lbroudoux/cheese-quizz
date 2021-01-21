@@ -1,0 +1,8 @@
+apiVersion: apps.open-cluster-management.io/v1
+kind: Channel
+metadata:
+  name: githubcom-lbroudoux-cheese-quizz
+  namespace: githubcom-lbroudoux-cheese-quizz-ns
+spec:
+  pathname: 'https://github.com/lbroudoux/cheese-quizz.git'
+  type: Git
