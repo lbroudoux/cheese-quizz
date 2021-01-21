@@ -1,0 +1,6 @@
+bases:
+  - ../../base
+patchesStrategicMerge:
+  - quizz-question-deployment-v1.yaml
+resources:
+  - quizz-question-configmap-v2.yml

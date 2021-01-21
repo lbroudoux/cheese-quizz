@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cheese-quizz-question
+  labels:
+    app: cheese-quizz-question
+spec:
+  ports:
+  - name: http
+    port: 8080
+  selector:
+    app: cheese-quizz-question

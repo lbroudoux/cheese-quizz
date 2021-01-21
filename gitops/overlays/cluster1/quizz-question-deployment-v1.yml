@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cheese-quizz-question-v1
+spec:
+  replicas: 2
+  template:
+    spec:
+      volumes:                                                      
+      - name: quizz-question-config
+        configMap:                                                
+          name: cheese-quizz-question-v2-config

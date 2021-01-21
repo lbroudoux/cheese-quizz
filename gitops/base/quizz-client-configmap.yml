@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cheese-quizz-client-config
+data:
+  application.properties: |-
+    # Configuration file
+    # key = value
+    %kube.quizz-like-function.url=http://cheese-quizz-like-function-cheese-quizz.apps.cluster-lemans-11d9.lemans-11d9.example.opentlc.com

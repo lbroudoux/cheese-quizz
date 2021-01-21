@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cheese-quizz-client
+  labels:
+    app: cheese-quizz-client
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: cheese-quizz-client
+    app.kubernetes.io/part-of: cheese-quizz-app
+    app.openshift.io/runtime: quarkus
+  annotations:
+    app.openshift.io/vcs-ref: master
+    app.openshift.io/vcs-uri: 'https://github.com/lbroudoux/cheese-quizz'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cheese-quizz-client
+  template:
+    metadata:
+      labels:
+        app: cheese-quizz-client
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: "http"
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+        - name: quizz-client
+          image: quay.io/lbroudoux/cheese-quizz-client:latest
+          imagePullPolicy: Always
+          env:
+          - name: QUARKUS_PROFILE
+            value: kube
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 1
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 8778
+            name: jolokia
+            protocol: TCP
+          - containerPort: 9779
+            name: prometheus
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: "/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+          volumeMounts:                                               
+          - name: quizz-client-config
+            mountPath: /deployments/config
+      volumes:                                                      
+      - name: quizz-client-config
+        configMap:                                                
+          name: cheese-quizz-client-config
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler

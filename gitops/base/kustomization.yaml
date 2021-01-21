@@ -1,0 +1,8 @@
+resources:
+  - quizz-question-configmap-v1.yml
+  - quizz-question-deployment-v1.yml
+  - quizz-question-service.yml
+  - quizz-client-configmap.yml
+  - quizz-client-deployment.yml
+  - quizz-client-service.yml
+  - quizz-client-route.yml
