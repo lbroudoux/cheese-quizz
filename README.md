@@ -571,8 +571,59 @@ We can check in below screenshot that the customization required have being appl
 
 ### ArgoCD way
 
-```
-oc -n argocd apply -f https://raw.githubusercontent.com/argoproj/argo-cd/v1.4.2/manifests/install.yaml
+[Argo CD](https://argoproj.github.io/argo-cd/) is a declarative, GitOps continuous delivery tool for Kubernetes. The project was admitted into CNCF in April 2020 and since then it attracted more and more users and contributors.
+
+Argo CD can be easily installed on Kubernetes through an Operator and be tighly integrated with OpenShift RBAC system (see [this blog](https://www.openshift.com/blog/openshift-authentication-integration-with-argocd)). It's really easy to install on OpenShift has shown in [this video](https://www.youtube.com/watch?v=xYCX2EejSMc).
+
+> You can reuse the `ArgoCD` custom resource [here](argofiles/argocd-cr.yml).
+
+It's really easy to setup Argo for the host Kubernetes cluster deployment. Here below we're going to detail how to do the setup in a multi-cluster environment to compare with OCM/RHACM above.
+
+First login to remote cluster - ie. we one you didn't install ArgoCD on - using a user having `cluster:admin` role and define a Kube context:
+
+```sh
+oc login https://api.cluster1.example.opentlc.com:6443/
+oc config rename-context $(oc config current-context) cluster1
 ```
 
-s
+Once done, you have to login to ArgoCD using the `argocd` CLI tool. Because we have setup the OpenShift login integration, we have to specify `--sso` flag.
+
+```sh
+argocd --insecure login argocd-server-argocd.apps.cluster0.example.opentlc.com:443 --sso
+```
+
+This command should open a browser for authenticating. If like me you encounter trouble with Safari (default browser) not resolving `localhost`, you may just have to `curl` the callback URL in a terminal for finalizing the login process.
+
+Then, you can now list the clusters:
+
+```sh
+$ argocd --insecure cluster list
+SERVER                          NAME        VERSION  STATUS   MESSAGE
+https://kubernetes.default.svc  in-cluster           Unknown  Cluster has no application and not being monitored.
+
+```
+
+And add a new one from our Kube context before listing them again:
+
+```sh
+$ argocd --insecure cluster add cluster1
+INFO[0000] ServiceAccount "argocd-manager" created in namespace "kube-system" 
+INFO[0000] ClusterRole "argocd-manager-role" created    
+INFO[0000] ClusterRoleBinding "argocd-manager-role-binding" created 
+Cluster 'https://api.cluster1.example.opentlc.com:6443' added
+
+$ argocd --insecure cluster list
+SERVER                                                  NAME          VERSION  STATUS      MESSAGE
+https://api.cluster1.example.opentlc.com:6443           cluster1      1.19     Successful  
+https://kubernetes.default.svc                          in-cluster             Unknown     Cluster has no application and not being monitored.
+```
+
+Final step, you just have to create the `Application` within ArgoCD. You can do that through UI or just by creating the `Application` resource within `argocd` namespace (where we install ArgoCD on cluster0).
+
+```sh
+oc apply -f argofiles/cheese-quizz-application.yml
+```
+
+We can check in below screenshot that the customization required have being applied (2 pods present in `ReplicaSet`):
+
+![gitops-argocd-deployment](./assets/gitops-argocd-deployment.png)

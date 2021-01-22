@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cheese-quizz
+spec:
+  destination:
+    name: cluster1
+    namespace: cheese-quizz-argo
+  source:
+    path: gitops/overlays/cluster1
+    repoURL: 'https://github.com/lbroudoux/cheese-quizz'
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
