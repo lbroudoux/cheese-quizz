@@ -1,0 +1,13 @@
+apiVersion: apps.open-cluster-management.io/v1alpha1
+kind: GitOpsCluster
+metadata:
+  name: clusterset-prod-gitops-cluster
+  namespace: argocd-clusterset-prod
+spec:
+  argoServer:
+    argoNamespace: argocd-clusterset-prod
+    cluster: local-cluster
+  placementRef:
+    apiVersion: cluster.open-cluster-management.io/v1alpha1
+    kind: Placement
+    name: clusterset-prod-placement

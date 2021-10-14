@@ -1,0 +1,7 @@
+apiVersion: cluster.open-cluster-management.io/v1alpha1
+kind: ManagedClusterSetBinding
+metadata:
+  name: clusterset-prod
+  namespace: argocd-clusterset-prod
+spec:
+  clusterSet: clusterset-prod

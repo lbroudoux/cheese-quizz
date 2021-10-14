@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cheese-quizz
+spec:
+  generators:
+    - clusters: # Automatically use all clusters defined within Argo CD by ACM
+        selector:
+          matchLabels:
+            apps.open-cluster-management.io/acm-cluster: 'true'
+  template:
+    metadata:
+      name: cheese-quizz-{{name}}
+    spec:
+      destination:
+        server: '{{server}}'
+        namespace: cheese-quizz-argo
+      source:
+        path: gitops/overlays/cluster1
+        repoURL: 'https://github.com/lbroudoux/cheese-quizz'
+        targetRevision: HEAD
+      project: default
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
